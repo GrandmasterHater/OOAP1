@@ -203,7 +203,6 @@ namespace OOAP1.Task4DynArray
         }
         
         #endregion
-        
 
         #region Запросы
 
@@ -231,7 +230,6 @@ namespace OOAP1.Task4DynArray
         public bool IsEmpty() => _count == 0;
         
         #endregion
-
 
         #region Дополнительные запросы
 
