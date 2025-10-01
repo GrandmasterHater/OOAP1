@@ -115,6 +115,14 @@ namespace OOAP1.Task6Deque
     
     public abstract class Deque<T> : ParentQueue<T>
     {
+        public const int REMOVE_TAIL_NIL = 0;
+        public const int REMOVE_TAIL_OK = 1;
+        public const int REMOVE_TAIL_ERR_QUEUE_EMPTY = 2;
+        
+        public const int GET_TAIL_NIL = 0;
+        public const int GET_TAIL_OK = 1;
+        public const int GET_TAIL_ERR_QUEUE_EMPTY = 2;
+        
         // Конструктор
         
         // Постусловие: создана пустая очередь.
@@ -150,14 +158,6 @@ namespace OOAP1.Task6Deque
 
     public class DequeImpl<T> : Deque<T>
     {
-        public const int REMOVE_TAIL_NIL = 0;
-        public const int REMOVE_TAIL_OK = 1;
-        public const int REMOVE_TAIL_ERR_QUEUE_EMPTY = 2;
-        
-        public const int GET_TAIL_NIL = 0;
-        public const int GET_TAIL_OK = 1;
-        public const int GET_TAIL_ERR_QUEUE_EMPTY = 2;
-        
         private int _removeTailStatus;
         private int _getTailStatus;
 
