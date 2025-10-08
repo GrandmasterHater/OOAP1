@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace OOAP1.Task9PowerSet
 {
@@ -14,10 +16,11 @@ namespace OOAP1.Task9PowerSet
         private const int REMOVE_ERR_EMPTY = 2;
         private const int REMOVE_ERR_NOT_EXISTS = 3;
         
-        private Slot[] _slots;
         private int _putStatus;
         private int _removeStatus;
         private int _count;
+        
+        protected Slot[] Slots { get; private set; }
         
         #region Конструктор
         
@@ -27,7 +30,7 @@ namespace OOAP1.Task9PowerSet
             if (capacity < 0)
                 throw new ArgumentOutOfRangeException("Capacity must be non-negative!");
             
-            _slots = new Slot[capacity];
+            Slots = new Slot[capacity];
             
             ResetToInitialState();
         }
@@ -52,11 +55,11 @@ namespace OOAP1.Task9PowerSet
             int index = FindSlotIndex(value, slot => !slot.HasValue || slot.Value.Equals(value));
 
             bool isSlotFound = index >= 0;
-            bool isSlotEmpty = isSlotFound && !_slots[index].HasValue;
+            bool isSlotEmpty = isSlotFound && !Slots[index].HasValue;
             
             if (isSlotEmpty)
             {
-                _slots[index] = new ValueSlot(value);
+                Slots[index] = new ValueSlot(value);
                 ++_count;
             }
 
@@ -84,7 +87,7 @@ namespace OOAP1.Task9PowerSet
             
             if (slotFount)
             {
-                _slots[index] = new EmptySlot();
+                Slots[index] = new EmptySlot();
                 --_count;
                 _removeStatus = REMOVE_OK;
             }
@@ -118,14 +121,14 @@ namespace OOAP1.Task9PowerSet
         #endregion
         
         
-        protected bool IsFull() => _count == _slots.Length;
+        protected bool IsFull() => _count == Slots.Length;
         protected bool IsEmpty() => _count == 0;
 
         
         private void ResetToInitialState()
         {
-            for(int i = 0; i < _slots.Length; i++) 
-                _slots[i] = new EmptySlot();
+            for(int i = 0; i < Slots.Length; i++) 
+                Slots[i] = new EmptySlot();
             
             _count = 0;
             
@@ -135,14 +138,14 @@ namespace OOAP1.Task9PowerSet
         
         private int FindSlotIndex(T value, Predicate<Slot> comparer)
         {
-            int capacity = _slots.Length;
+            int capacity = Slots.Length;
             
             int hash1 = FirstHashFun(value, capacity);
             int hash2 = SecondHashFun(value, capacity);
 
             for (int iteration = 0, index = hash1 ; iteration < capacity; ++iteration, index = GetNextIndex(iteration, hash1, hash2, capacity))
             {
-                if (comparer.Invoke(_slots[index]))
+                if (comparer.Invoke(Slots[index]))
                     return index;
             }
 
@@ -164,14 +167,14 @@ namespace OOAP1.Task9PowerSet
             return 1 + (Math.Abs(value.GetHashCode()) % (capacity - 2));
         }
         
-        private abstract class Slot
+        protected abstract class Slot
         {
             public abstract T Value { get; }
 
             public abstract bool HasValue { get; }
         }
     
-        private class ValueSlot : Slot
+        protected class ValueSlot : Slot
         {
             public override T Value { get; }
         
@@ -183,7 +186,7 @@ namespace OOAP1.Task9PowerSet
             public override bool HasValue => true;
         }
     
-        private class EmptySlot : Slot
+        protected class EmptySlot : Slot
         {
             public override T Value { get; } = default;
 
@@ -196,10 +199,73 @@ namespace OOAP1.Task9PowerSet
         // Конструктор
         // Постусловие: создано пустое множество для заданного количества элементов.
         protected PowerSet(int capacity) : base(capacity) { }
+        
+         #region Запросы
+         
+         // Объединение текущего множества и множества value.
+         public abstract PowerSet<T> Union(PowerSet<T> value);
+         
+         // Пересечение текущего множества и множества value.
+         public abstract PowerSet<T> Intersection(PowerSet<T> value);
+         
+         // Разница текущего множества и множества value.
+         public abstract PowerSet<T> Difference(PowerSet<T> value);
+         
+         // Является ли множество value подмножеством текущего.
+         public abstract bool IsSubset(PowerSet<T> value);
+         
+         #endregion
     }
     
     public class PowerSetImpl<T> : PowerSet<T>
     {
         public PowerSetImpl(int capacity) : base(capacity) { }
+        
+        public override PowerSet<T> Union(PowerSet<T> value)
+        {
+            PowerSet<T> result = value.Difference(this);
+            IEnumerable<Slot> values = Slots.Where(slot => slot.HasValue);
+            
+            foreach (Slot slot in values)
+            {
+                result.Put(slot.Value);
+            }
+            
+            return result;
+        }
+
+        public override PowerSet<T> Intersection(PowerSet<T> value)
+        {
+            PowerSetImpl<T> result = new PowerSetImpl<T>(Slots.Length);
+            
+            IEnumerable<Slot> intersection = Slots.Where(slot => slot.HasValue && value.Contains(slot.Value));
+
+            foreach (Slot slot in intersection)
+            {
+                result.Put(slot.Value);
+            }
+            
+            return result;
+        }
+
+        public override PowerSet<T> Difference(PowerSet<T> value)
+        {
+            PowerSetImpl<T> result = new PowerSetImpl<T>(Slots.Length);
+            
+            IEnumerable<Slot> difference = Slots.Where(slot => slot.HasValue && !value.Contains(slot.Value));
+
+            foreach (Slot slot in difference)
+            {
+                result.Put(slot.Value);
+            }
+            
+            return result;
+        }
+
+        public override bool IsSubset(PowerSet<T> value)
+        {
+            int subsetSize = value.Count();
+            return Count() >= subsetSize && Slots.Count(slot => slot.HasValue && value.Contains(slot.Value)) == subsetSize;
+        }
     }
 }
